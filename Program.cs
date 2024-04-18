@@ -1,6 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
-
-namespace EFValidation;
+﻿namespace EFValidation;
 
 public class Program
 {
@@ -8,47 +6,70 @@ public class Program
     {
         var product = new Product();
 
-        Console.Write("Enter product name: ");
-        product.Name = Console.ReadLine();
-
-        Console.Write("Enter product description: ");
-        product.Description = Console.ReadLine();
-
-        Console.Write("Enter product price: ");
-        if (!decimal.TryParse(Console.ReadLine(), out decimal price))
+        List<string> nameErrors;
+        while (true)
         {
-            Console.WriteLine("Invalid price format. Please enter a valid number.");
-            return;
-        }
-
-        product.Price = price;
-
-        // Display validation errors if any
-        product.DisplayValidationErrors();
-
-        // If there are validation errors, prompt the user to resubmit
-        while (!Validator.TryValidateObject(product, new ValidationContext(product), null, true))
-        {
-            Console.WriteLine("Please correct the errors above and try again.");
-
             Console.Write("Enter product name: ");
             product.Name = Console.ReadLine();
+            
+            if (product.ValidateName(out nameErrors))
+            {
+                break;
+            }
+            DisplayErrors(nameErrors);
+        }
 
+        List<string> descriptionErrors;
+        while (true)
+        {
             Console.Write("Enter product description: ");
             product.Description = Console.ReadLine();
+            
+            if (product.ValidateDescription(out descriptionErrors))
+            {
+                break;
+            }
+            DisplayErrors(descriptionErrors);
+        }
 
+        List<string> priceErrors;
+        while (true)
+        {
             Console.Write("Enter product price: ");
-            if (!decimal.TryParse(Console.ReadLine(), out price))
+            if (!decimal.TryParse(Console.ReadLine(), out var price))
             {
                 Console.WriteLine("Invalid price format. Please enter a valid number.");
-                return;
+                continue;
             }
 
             product.Price = price;
 
-            product.DisplayValidationErrors();
+            if (product.ValidatePrice(out priceErrors))
+            {
+                break;
+            }
+            DisplayErrors(priceErrors);
         }
 
-        Console.WriteLine("All data is valid. Continuing with the application...");
+        using (var context = new AppDbContext())
+        {
+            context.Products.Add(product);
+            context.SaveChanges();
+        }
+
+        Console.WriteLine("Product added to the database. Press any key to exit.");
+        Console.ReadKey();
+    }
+
+    private static void DisplayErrors(List<string> errors)
+    {
+        Console.ForegroundColor = ConsoleColor.Red;
+        Console.WriteLine("Invalid input. Please try again.");
+        foreach (var error in errors)
+        {
+            Console.WriteLine(error);
+        }
+
+        Console.ResetColor();
     }
 }

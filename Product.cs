@@ -16,17 +16,43 @@ public class Product
     [Range(0, double.MaxValue, ErrorMessage = "Price must be a positive number")]
     public decimal Price { get; set; }
 
-    public void DisplayValidationErrors()
+    public bool ValidateName(out List<string> errors)
     {
-        var context = new ValidationContext(this, serviceProvider: null, items: null);
-        var results = new System.Collections.Generic.List<ValidationResult>();
-
-        if (!Validator.TryValidateObject(this, context, results, validateAllProperties: true))
+        var context = new ValidationContext(this) { MemberName = nameof(Name) };
+        errors = new List<string>();
+        var results = new List<ValidationResult>();
+        bool isValid = Validator.TryValidateProperty(Name, context, results);
+        if (!isValid)
         {
-            foreach (var validationResult in results)
-            {
-                Console.WriteLine(validationResult.ErrorMessage);
-            }
+            errors.AddRange(results.Select(r => r.ErrorMessage));
         }
+        return isValid;
+    }
+
+    public bool ValidateDescription(out List<string> errors)
+    {
+        var context = new ValidationContext(this) { MemberName = nameof(Description) };
+        errors = new List<string>();
+        var results = new List<ValidationResult>();
+        bool isValid = Validator.TryValidateProperty(Description, context, results);
+        if (!isValid)
+        {
+            errors.AddRange(results.Select(r => r.ErrorMessage));
+        }
+        return isValid;
+    }
+
+    public bool ValidatePrice(out List<string> errors)
+    {
+        var context = new ValidationContext(this) { MemberName = nameof(Price) };
+        errors = new List<string>();
+        var results = new List<ValidationResult>();
+        bool isValid = Validator.TryValidateProperty(Price, context, results);
+        if (!isValid)
+        {
+            errors.AddRange(results.Select(r => r.ErrorMessage));
+        }
+        return isValid;
     }
 }
+
